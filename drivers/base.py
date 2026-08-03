@@ -17,6 +17,10 @@ class Instance:
     
     execute() and teardown() need to know which sandbox to address
     """
+    id: str
+    runtime: str
+    # For wasmtime, Wasmtime instance is live Python object, so we can store it here for later use. For other runtimes, this is None.
+    meta : dict = field(default_factory=dict)
 
 class RuntimeDriver(ABC):
     """
@@ -51,14 +55,15 @@ class RuntimeDriver(ABC):
         WasmtimeL: compile the wasm module
         Firecracker: assemble kernel + root filesystem
 
-        Exclude from all timingsby design to exclude compilation time from the measured execution time
+        Exclude from all timingsby design to exclude compilation time from the measured cold start time
         """
+        
     @abstractmethod
     def provision(self, workload: str) -> Instance:
         """
         Create a new sandbox and BLOCK until the workload signals it is ready.
 
-        The hardness times this entire call, so its duration is the cold start latency.
+        The harness times this entire call, so its duration is the cold start latency.
         The blocking requiremnt is what makes that true: if this returned before the workload could accept work, the measurement would be of sandbox creation only, and would undervound
         """
 
@@ -67,8 +72,9 @@ class RuntimeDriver(ABC):
         """
         Run one invocation against a live instance and return its result.
 
-        The hardness times this call = execution latency. In Model 2, repeated execute() calls against one isntance give the warm-invocation numbers.
+        The harness times this call = execution latency. In Model 2, repeated execute() calls against one isntance give the warm-invocation numbers.
         """
+    
 
     @abstractmethod
     def collect(self, instance: Instance) -> dict:
