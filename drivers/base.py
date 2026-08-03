@@ -4,7 +4,7 @@
 """
 This module defines the CONTRACT between the benchmark loop and the three runtime drivers under test
 Docker, Firecracker, Wasmtime
-Using statndardized contract to ensure measured performance is comparable across runtimes
+Using standardized contract to ensure measured performance is comparable across runtimes
 """
 
 from abc import ABC, abstractmethod
@@ -27,7 +27,7 @@ class RuntimeDriver(ABC):
     Abstract base class
 
     The harness holds the single stopwatch and times the *calls* to these methods
-        NOTE: if each driver timed iteself where would be three timing implementations with no guarantee they measure the same thing.
+        NOTE: if each driver timed itself there would be three timing implementations with no guarantee they measure the same thing.
     One stopwatch held by the referee keeps the comparison fair
     
     Lifecycle of one measurement:
@@ -39,7 +39,7 @@ class RuntimeDriver(ABC):
         - (metrics)
         - (cleanup)
     
-    Model 1 (ephimeral): provision -> execute -> collect -> teardown, per request
+    Model 1 (ephemeral): provision -> execute -> collect -> teardown, per request
     Model 2 (session): provision -> execute many -> collect -> teardown
     """
 
@@ -51,11 +51,11 @@ class RuntimeDriver(ABC):
         """
         Build the runtime-specific artefact for a workload ONCE ahead of time
         
-        Docker: vuild the image
-        WasmtimeL: compile the wasm module
+        Docker: build the image
+        Wasmtime: compile the wasm module
         Firecracker: assemble kernel + root filesystem
 
-        Exclude from all timingsby design to exclude compilation time from the measured cold start time
+        Excluded from all timings by design to exclude compilation time from the measured cold start time
         """
         
     @abstractmethod
@@ -64,7 +64,7 @@ class RuntimeDriver(ABC):
         Create a new sandbox and BLOCK until the workload signals it is ready.
 
         The harness times this entire call, so its duration is the cold start latency.
-        The blocking requiremnt is what makes that true: if this returned before the workload could accept work, the measurement would be of sandbox creation only, and would undervound
+        The blocking requirement is what makes that true: if this returned before the workload could accept work, the measurement would be of sandbox creation only and would underestimate the cold start latency.
         """
 
     @abstractmethod
@@ -72,7 +72,7 @@ class RuntimeDriver(ABC):
         """
         Run one invocation against a live instance and return its result.
 
-        The harness times this call = execution latency. In Model 2, repeated execute() calls against one isntance give the warm-invocation numbers.
+        The harness times this call = execution latency. In Model 2, repeated execute() calls against one instance give the warm-invocation numbers.
         """
     
 
@@ -81,16 +81,16 @@ class RuntimeDriver(ABC):
         """
         Read resource metrics for this instance (NOT TIMING METRICS)
         
-        Docker: peak memory form the container's cgroup file (memory.peak)
+        Docker: peak memory from the container's cgroup file (memory.peak)
         Other drivers: TBD
         """
 
     @abstractmethod
     def teardown(self, instance: Instance) -> None:
         """
-        Destroy the sandbox and leave NO resideue.
-        
-        Postcondition: no running container/VM/process remains, and any shared resouces are released.
+        Destroy the sandbox and leave NO residue.
+
+        Postcondition: no running container/VM/process remains, and any shared resources are released.
         """
 
     # Self-test: run `python -m drivers.base` to watch Python enforce the contract.
