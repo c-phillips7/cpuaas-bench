@@ -32,12 +32,8 @@ class RuntimeDriver(ABC):
     
     Lifecycle of one measurement:
         prepare() -> provision() -> execute(x1 or xN) -> collect() -> teardown()
-    Other considerations:
-        - (excluded)
-        - (=cold start)
-        - (=exec latency)
-        - (metrics)
-        - (cleanup)
+        
+    prepare (excluded), provision (=cold start), execute (=exec latency), collect (metrics), teardown (cleanup)
     
     Model 1 (ephemeral): provision -> execute -> collect -> teardown, per request
     Model 2 (session): provision -> execute many -> collect -> teardown
