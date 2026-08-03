@@ -1,0 +1,103 @@
+# RuntimeDriver abstract base class
+# Goals: provision a sandbox, time it, run the workload, time it, read memory, tear down, repeat
+
+"""
+This module defines the CONTRACT between the benchmark loop and the three runtime drivers under test
+Docker, Firecracker, Wasmtime
+Using statndardized contract to ensure measured performance is comparable across runtimes
+"""
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+
+@dataclass
+class Instance:
+    """
+    One live sandbox created by a driver's provision() call
+    
+    execute() and teardown() need to know which sandbox to address
+    """
+
+class RuntimeDriver(ABC):
+    """
+    Abstract base class
+
+    The harness holds the single stopwatch and times the *calls* to these methods
+        NOTE: if each driver timed iteself where would be three timing implementations with no guarantee they measure the same thing.
+    One stopwatch held by the referee keeps the comparison fair
+    
+    Lifecycle of one measurement:
+        prepare() -> provision() -> execute(x1 or xN) -> collect() -> teardown()
+    Other considerations:
+        - (excluded)
+        - (=cold start)
+        - (=exec latency)
+        - (metrics)
+        - (cleanup)
+    
+    Model 1 (ephimeral): provision -> execute -> collect -> teardown, per request
+    Model 2 (session): provision -> execute many -> collect -> teardown
+    """
+
+    # Concrete driver overrides label for logging and reporting
+    name: str = "abstract"
+
+    @abstractmethod
+    def prepare(self, workload: str) -> None:
+        """
+        Build the runtime-specific artefact for a workload ONCE ahead of time
+        
+        Docker: vuild the image
+        WasmtimeL: compile the wasm module
+        Firecracker: assemble kernel + root filesystem
+
+        Exclude from all timingsby design to exclude compilation time from the measured execution time
+        """
+    @abstractmethod
+    def provision(self, workload: str) -> Instance:
+        """
+        Create a new sandbox and BLOCK until the workload signals it is ready.
+
+        The hardness times this entire call, so its duration is the cold start latency.
+        The blocking requiremnt is what makes that true: if this returned before the workload could accept work, the measurement would be of sandbox creation only, and would undervound
+        """
+
+    @abstractmethod
+    def execute(self, instance: Instance, payload: bytes) -> bytes:
+        """
+        Run one invocation against a live instance and return its result.
+
+        The hardness times this call = execution latency. In Model 2, repeated execute() calls against one isntance give the warm-invocation numbers.
+        """
+
+    @abstractmethod
+    def collect(self, instance: Instance) -> dict:
+        """
+        Read resource metrics for this instance (NOT TIMING METRICS)
+        
+        Docker: peak memory form the container's cgroup file (memory.peak)
+        Other drivers: TBD
+        """
+
+    @abstractmethod
+    def teardown(self, instance: Instance) -> None:
+        """
+        Destroy the sandbox and leave NO resideue.
+        
+        Postcondition: no running container/VM/process remains, and any shared resouces are released.
+        """
+
+    # Self-test: run `python -m drivers.base` to watch Python enforce the contract.
+if __name__ == "__main__":
+    try:
+        RuntimeDriver()  # type: ignore[abstract]
+    except TypeError as e:
+        print(f"OK -- abstract class refused instantiation:\n  {e}\n")
+ 
+    class Forgetful(RuntimeDriver):  # implements only 1 of 5 required methods
+        def prepare(self, workload: str) -> None: ...
+ 
+    try:
+        Forgetful()  # type: ignore[abstract]
+    except TypeError as e:
+        print(f"OK -- incomplete driver rejected, missing methods listed:\n  {e}")
