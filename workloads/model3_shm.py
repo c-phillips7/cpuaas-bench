@@ -44,8 +44,6 @@ SEG = "/dev/shm/bench_m3"
 SIZE = 4096
 PING_OFF = 0    # ping counter: cache line 0
 PONG_OFF = 64   # pong counter: cache line 1 (avoid false sharing)
-WARMUP = 5_000  # number of warmup iterations, then measured iterations
-ITERS = 50_000
 
 # Open a shared memory segment for ping/pong communication.
 def open_seg(create):
@@ -68,9 +66,9 @@ def pong(m):
             struct.pack_into("<q", m, PONG_OFF, v)
 
 # Ping process: write to ping counter, wait for pong counter to match, measure RTT.
-def ping(m, out):
+def ping(m, out, warmup, iters, condition):
     # warm-up phase: untimed
-    for i in range(1, WARMUP + 1):
+    for i in range(1, warmup + 1):
         struct.pack_into("<q", m, PING_OFF, i)
         while struct.unpack_from("<q", m, PONG_OFF)[0] != i:
             pass
@@ -79,7 +77,7 @@ def ping(m, out):
     lat = []
     t_batch0 = time.perf_counter_ns()
     # measured iterations: write to ping counter, wait for pong counter to match, record RTT
-    for i in range(WARMUP + 1, WARMUP + ITERS + 1):
+    for i in range(warmup + 1, warmup + iters + 1):
         t0 = time.perf_counter_ns()
         struct.pack_into("<q", m, PING_OFF, i)
         while struct.unpack_from("<q", m, PONG_OFF)[0] != i:
@@ -99,9 +97,11 @@ def ping(m, out):
         f.writelines(f"{v}\n" for v in lat)
     # add meta data of number of warmups and iterations used for each run
     meta = {
-        "warmup": WARMUP, "iters": ITERS,
+        "warmup": warmup, "iters": iters,
+        "condition": a.condition,   # or pass it into ping alongside out
         "argv": sys.argv,
         "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "condition": condition
     }
     with open(out + ".meta.json", "w") as f:
         json.dump(meta, f, indent=1)
@@ -113,9 +113,13 @@ if __name__ == "__main__":
     p.add_argument("role", choices=["ping", "pong"])
     p.add_argument("--core", type=int, required=True)
     p.add_argument("--out", default="results/m3_host.csv")
+    p.add_argument("--warmup", type=int, default=5_000)
+    p.add_argument("--iters", type=int, default=50_000)
+    p.add_argument("--condition", default="baseline",
+                   help="environment label for provenance only, e.g. netem50ms")
     a = p.parse_args()
     if a.role == "ping" and os.path.exists(a.out):
         sys.exit(f"refusing to overwrite {a.out} - move it or pick a new --out name")
     os.sched_setaffinity(0, {a.core})
     m = open_seg(create=(a.role == "ping"))
-    ping(m, a.out) if a.role == "ping" else pong(m)
+    ping(m, a.out, a.warmup, a.iters, a.condition) if a.role == "ping" else pong(m)

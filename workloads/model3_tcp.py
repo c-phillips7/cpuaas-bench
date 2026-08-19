@@ -41,8 +41,6 @@ import json
 # Refuses to overwrite an existing --out file (guard in __main__).
 # =============================================================================
 PORT = 5555
-WARMUP = 5_000
-ITERS = 50_000
 MSG = 8  # bytes, matches the SHM counter size
 
 
@@ -60,18 +58,18 @@ def pong(host):
         conn.sendall(data)
 
 
-def ping(host, out):
+def ping(host, out, warmup, iters, condition):
     s = socket.create_connection((host, PORT))
     s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
     # Warmup
-    for i in range(WARMUP):
+    for i in range(warmup):
         s.sendall(i.to_bytes(MSG, "little"))
         s.recv(MSG)
     lat = []
     t_batch0 = time.perf_counter_ns()
-    for i in range(ITERS):
+    for i in range(iters):
         if i % 10_000 == 0:
-            print(f"[{i}/{ITERS}]", file=sys.stderr, flush=True)
+            print(f"[{i}/{iters}]", file=sys.stderr, flush=True)
         t0 = time.perf_counter_ns()
         s.sendall(i.to_bytes(MSG, "little"))
         s.recv(MSG)
@@ -86,13 +84,15 @@ def ping(host, out):
         f.write("rtt_ns\n")
         f.writelines(f"{v}\n" for v in lat)
     # add meta data of number of warmups and iterations used for each run
-        meta = {
-            "warmup": WARMUP, "iters": ITERS,
-            "argv": sys.argv,
-            "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-        with open(out + ".meta.json", "w") as f:
-            json.dump(meta, f, indent=1)
+    meta = {
+        "warmup": warmup, "iters": iters,
+        "condition": a.condition,   # or pass it into ping alongside out
+        "argv": sys.argv,
+        "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "condition": condition
+    }
+    with open(out + ".meta.json", "w") as f:
+        json.dump(meta, f, indent=1)
 
 
 if __name__ == "__main__":
@@ -101,9 +101,13 @@ if __name__ == "__main__":
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--core", type=int, required=True)
     p.add_argument("--out", default="results/m3_tcp.csv")
+    p.add_argument("--warmup", type=int, default=5_000)
+    p.add_argument("--iters", type=int, default=50_000)
+    p.add_argument("--condition", default="baseline",
+                   help="environment label for provenance only, e.g. netem50ms")
     a = p.parse_args()
     # Added check for same file name when trying different delays
     if a.role == "ping" and os.path.exists(a.out):
         sys.exit(f"refusing to overwrite {a.out} - move it or pick a new --out name")
     os.sched_setaffinity(0, {a.core})
-    ping(a.host, a.out) if a.role == "ping" else pong(a.host)
+    ping(a.host, a.out, a.warmup, a.iters, a.condition) if a.role == "ping" else pong(a.host)

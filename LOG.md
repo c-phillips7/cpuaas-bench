@@ -1,5 +1,5 @@
-03/08
-- Docker workings
+
+# Docker workings
 - Installed native Linux docker in Ubuntu instead of desktop windows version used previously.
 - needed cgroup path for memory.peak 
     - discovered via find with a live container, systemd scope pattern confirmed
