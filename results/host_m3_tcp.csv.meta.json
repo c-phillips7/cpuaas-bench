@@ -1,0 +1,14 @@
+{
+ "warmup": 5000,
+ "iters": 50000,
+ "condition": "baseline",
+ "argv": [
+  "workloads/model3_tcp.py",
+  "ping",
+  "--core",
+  "4",
+  "--out",
+  "results/host_m3_tcp.csv"
+ ],
+ "utc": "2026-08-19T14:23:36Z"
+}

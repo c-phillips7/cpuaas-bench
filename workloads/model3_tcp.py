@@ -72,6 +72,7 @@ def ping(host, out, warmup, iters, condition):
             print(f"[{i}/{iters}]", file=sys.stderr, flush=True)
         t0 = time.perf_counter_ns()
         s.sendall(i.to_bytes(MSG, "little"))
+        time.sleep(0.5)  # let the sentinel drain the netem egress queue before container teardown kills it
         s.recv(MSG)
         lat.append(time.perf_counter_ns() - t0)
     t_batch1 = time.perf_counter_ns()

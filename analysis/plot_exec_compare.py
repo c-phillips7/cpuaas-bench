@@ -9,8 +9,8 @@ def cdf(path, col):
 
 
 # Plotting logic
-x1, y1 = cdf("results/docker_model1.csv", "exec_ms")
-x2, y2 = cdf("results/docker_model2.csv", "warm_exec_ms")
+x1, y1 = cdf("results/docker_m1.csv", "exec_ms")
+x2, y2 = cdf("results/docker_m2.csv", "warm_exec_ms")
 plt.step(x1, y1, where="post", label="Model 1 exec (always first invocation)")
 plt.step(x2, y2, where="post", label="Model 2 warm exec")
 plt.xlabel("Execution latency (ms)")

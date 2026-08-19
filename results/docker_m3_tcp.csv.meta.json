@@ -1,20 +1,22 @@
 {
  "warmup": 5000,
  "iters": 50000,
- "condition": "netem50ms",
+ "condition": "baseline",
  "argv": [
-  "model3_shm.py",
+  "model3_tcp.py",
   "ping",
+  "--host",
+  "m3-pong",
   "--core",
   "4",
   "--out",
-  "/results/docker_m3_shm_netem50ms.csv",
+  "/results/docker_m3_tcp.csv",
   "--warmup",
   "5000",
   "--iters",
   "50000",
   "--condition",
-  "netem50ms"
+  "baseline"
  ],
- "utc": "2026-08-19T14:52:05Z"
+ "utc": "2026-08-19T14:25:25Z"
 }

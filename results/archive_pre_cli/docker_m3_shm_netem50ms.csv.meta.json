@@ -1,0 +1,13 @@
+{
+ "warmup": 5000,
+ "iters": 50000,
+ "argv": [
+  "model3_shm.py",
+  "ping",
+  "--core",
+  "4",
+  "--out",
+  "/results/docker_m3_shm_netem50ms.csv"
+ ],
+ "utc": "2026-08-19T13:12:51Z"
+}
