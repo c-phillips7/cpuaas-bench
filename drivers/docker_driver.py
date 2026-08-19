@@ -7,7 +7,7 @@ from .base import RuntimeDriver, Instance
 # NOTE: no text=True included because abstract contract is bytes in/out, not text. The workload is responsible for encoding/decoding text to bytes if needed.
 class DockerDriver(RuntimeDriver):
     name = "docker"
-    image = "bench-model1"
+    image = "bench-py"
     
     def prepare(self, workload: str) -> None:
         """
@@ -27,9 +27,12 @@ class DockerDriver(RuntimeDriver):
         name = "bench-" + uuid.uuid4().hex[:8]  # short unique name for the container
         
         # Run attached with piped stdin/stdout; -i holds stdin open for the request/response protocol, --rm auto-removes on exit
-        proc = subprocess.Popen(["docker", "run", "--rm", "-i", "--name", name, self.image],
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                )
+            # f"{workload}.py is the workload script to run inside the container
+        proc = subprocess.Popen(
+            ["docker", "run", "--rm", "-i", "--name", name, self.image,
+            "python", "-u", f"{workload}.py"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        )
         # Wait for the workload to signal that it is ready to accept work. The workload prints "READY" to stdout when it is ready.
         # Blocking on READY means a timed provision() spans the full cold start (container + interpreter + workload init), not just container creation.
         first = proc.stdout.readline().strip() # type: ignore

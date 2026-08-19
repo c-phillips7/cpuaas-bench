@@ -2,6 +2,6 @@
 # Should help with cold start times
 FROM python:3.12-slim
 WORKDIR /app
-COPY workloads/model1.py .
+COPY workloads/ .
 # -u for unbuffered, prevents buffering bug
 CMD ["python", "-u", "model1.py"]

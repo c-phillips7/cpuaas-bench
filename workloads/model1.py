@@ -8,4 +8,3 @@ for line in sys.stdin:
     result = sum(i * i for i in range(n)) # do some work
     print(result, flush=True)
 # No explicit exit needed; the process will exit when stdin is closed.
-    
