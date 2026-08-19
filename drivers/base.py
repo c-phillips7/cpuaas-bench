@@ -77,6 +77,11 @@ class RuntimeDriver(ABC):
         """
         Read resource metrics for this instance (NOT TIMING METRICS)
         
+        Contract: every driver returns the SAME keys, so the harness can write
+        uniform CSV rows with no per-runtime special cases. Keys carry their
+        units in the name (current contract: memory_peak_bytes) so a
+        bytes-vs-MB confusion cannot be typed silently.
+        
         Docker: peak memory from the container's cgroup file (memory.peak)
         Other drivers: TBD
         """
