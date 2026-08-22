@@ -4,3 +4,5 @@ results
 __pycache__
 *.md
 workloads_rust/target/
+!workloads_rust/target/x86_64-unknown-linux-musl/release/model1
+!workloads_rust/target/x86_64-unknown-linux-musl/release/model2

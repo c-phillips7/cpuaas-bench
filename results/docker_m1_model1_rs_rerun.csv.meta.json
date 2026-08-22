@@ -1,0 +1,15 @@
+{
+ "argv": [
+  "bench.py",
+  "m1",
+  "--runtime",
+  "docker",
+  "--workload",
+  "model1_rs",
+  "--tag",
+  "rerun"
+ ],
+ "utc": "2026-08-22T17:32:57Z",
+ "reps": 30,
+ "workload": "model1_rs"
+}

@@ -12,13 +12,13 @@ REPS = 30
 RESULTS = Path("results")
 
 # Bench Model 1: Ephemeral workload
-def bench_model1(driver, reps=REPS):
+def bench_model1(driver, reps=REPS, workload="model1"):
     # Prepare the driver for the workload, not timed, done once per driver/workload
-    driver.prepare("model1")
+    driver.prepare(workload)
     rows = []
     for i in range(reps):
         t0 = time.perf_counter_ns()
-        inst = driver.provision("model1")
+        inst = driver.provision(workload)
         t1 = time.perf_counter_ns()
         result = driver.execute(inst, b"1000")
         t2 = time.perf_counter_ns()
@@ -28,6 +28,7 @@ def bench_model1(driver, reps=REPS):
         rows.append({
             "rep": i,
             "runtime": driver.name,
+            "workload": workload,
             "model": 1,
             "cold_start_ms": (t1 - t0) / 1e6,
             "exec_ms": (t2 - t1) / 1e6,
@@ -37,12 +38,12 @@ def bench_model1(driver, reps=REPS):
     return rows
 
 # Bench Model 2: Session-based workload
-def bench_model2(driver, sessions=5, execs=30) :
-    driver.prepare("model2")
+def bench_model2(driver, sessions=5, execs=30, workload="model2") :
+    driver.prepare(workload)
     rows = []
     for s in range(sessions):
         t0 = time.perf_counter_ns()
-        inst = driver.provision("model2")
+        inst = driver.provision(workload)
         t1 = time.perf_counter_ns()
         cold_ms = (t1 - t0) / 1e6
         # Warm invocations
@@ -54,6 +55,7 @@ def bench_model2(driver, sessions=5, execs=30) :
                 "session": s,
                 "invocation": i,
                 "runtime": driver.name,
+                "workload": workload,
                 "model": 2,
                 "cold_start_ms": cold_ms, # Maybe if i == 0 else None 
                 "warm_exec_ms": (t3 - t2) / 1e6,

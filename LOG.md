@@ -40,3 +40,7 @@
 
 # Back to Docker
 - To compare the cold startup and other analysis in models 1 and 2, to account for the introduced rust workload, a Docker equivalent is added.
+- Implemented a pipeline to generate the binaries for docker to use, and added them to the build.
+- Added _rs to the naming convention, and added logic to check for _rs as a siffix to log the workload as rust based.
+- Re ran model 1 and 2 for docker (python workload), and new rust workloads to give clean comparison
+    - slight differences, but on the scale of docker vs Wasm, barely noticible

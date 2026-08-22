@@ -26,11 +26,17 @@ class DockerDriver(RuntimeDriver):
         # Name is assigned to the container so we can refer to it later for teardown and metrics collection. Using a short unique name avoids collisions with other containers.
         name = "bench-" + uuid.uuid4().hex[:8]  # short unique name for the container
         
-        # Run attached with piped stdin/stdout; -i holds stdin open for the request/response protocol, --rm auto-removes on exit
-            # f"{workload}.py is the workload script to run inside the container
+        # name-convention dispatch: workloads ending _rs are native binaries
+            # baked into the image; everything else is a Python script
+        if workload.endswith("_rs"):
+            cmd = [f"./{workload}"]
+        else:
+            
+            cmd = ["python", "-u", f"{workload}.py"]
+            # Run attached with piped stdin/stdout; -i holds stdin open for the request/response protocol, --rm auto-removes on exit
+                # f"{workload}.py is the workload script to run inside the container
         proc = subprocess.Popen(
-            ["docker", "run", "--rm", "-i", "--name", name, self.image,
-            "python", "-u", f"{workload}.py"],
+            ["docker", "run", "--rm", "-i", "--name", name, self.image, *cmd],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         )
         # Wait for the workload to signal that it is ready to accept work. The workload prints "READY" to stdout when it is ready.

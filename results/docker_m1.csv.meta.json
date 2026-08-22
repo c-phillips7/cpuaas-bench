@@ -1,8 +1,11 @@
 {
  "argv": [
   "bench.py",
-  "m1"
+  "m1",
+  "--runtime",
+  "docker"
  ],
- "utc": "2026-08-19T14:20:33Z",
- "reps": 30
+ "utc": "2026-08-22T17:32:25Z",
+ "reps": 30,
+ "workload": "model1"
 }

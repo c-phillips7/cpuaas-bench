@@ -54,18 +54,22 @@ def sidecar(out, extra):
 
 def cmd_m1(args):
     from runner import bench_model1, write_csv
+    w = args.workload or "model1"
+    wsuffix = f"_{w}" if w != "model1" else ""
     suffix = f"_{args.tag}" if args.tag else ""
-    out = RESULTS / f"{args.runtime}_m1{suffix}.csv"
-    write_csv(bench_model1(get_driver(args.runtime), reps=args.reps), out)
-    sidecar(out, {"reps": args.reps})
+    out = RESULTS / f"{args.runtime}_m1{wsuffix}{suffix}.csv"
+    write_csv(bench_model1(get_driver(args.runtime), reps=args.reps, workload=w), out)
+    sidecar(out, {"reps": args.reps, "workload": w})
 
 
 def cmd_m2(args):
     from runner import bench_model2, write_csv
+    w = args.workload or "model2"
+    wsuffix = f"_{w}" if w != "model2" else ""
     suffix = f"_{args.tag}" if args.tag else ""
-    out = RESULTS / f"{args.runtime}_m2{suffix}.csv"
-    write_csv(bench_model2(get_driver(args.runtime), sessions=args.sessions, execs=args.execs), out)
-    sidecar(out, {"sessions": args.sessions, "execs": args.execs})
+    out = RESULTS / f"{args.runtime}_m2{wsuffix}{suffix}.csv"
+    write_csv(bench_model2(get_driver(args.runtime), sessions=args.sessions, execs=args.execs, workload=w), out)
+    sidecar(out, {"sessions": args.sessions, "execs": args.execs, "workload": w})
 
 
 def cmd_figures(args):
@@ -115,6 +119,7 @@ if __name__ == "__main__":
     s.add_argument("--reps", type=int, default=30)
     s.add_argument("--tag", help="suffix to keep this run alongside existing data")
     s.add_argument("--runtime", choices=RUNTIMES, default="docker")
+    s.add_argument("--workload", help="workload name; _rs suffix = native binary")
     s.set_defaults(fn=cmd_m1)
 
     s = sub.add_parser("m2", help="Docker Model 2 sessions")
@@ -122,6 +127,7 @@ if __name__ == "__main__":
     s.add_argument("--execs", type=int, default=30)
     s.add_argument("--tag", help="suffix to keep this run alongside existing data")
     s.add_argument("--runtime", choices=RUNTIMES, default="docker")
+    s.add_argument("--workload", help="workload name; _rs suffix = native binary")
     s.set_defaults(fn=cmd_m2)
 
     s = sub.add_parser("figures", help="regenerate all figures from CSVs")

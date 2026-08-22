@@ -1,9 +1,12 @@
 {
  "argv": [
   "bench.py",
-  "m2"
+  "m2",
+  "--runtime",
+  "docker"
  ],
- "utc": "2026-08-19T14:20:49Z",
+ "utc": "2026-08-22T17:32:36Z",
  "sessions": 5,
- "execs": 30
+ "execs": 30,
+ "workload": "model2"
 }
