@@ -15,3 +15,6 @@ clean:
 
 build-wasm:
 	cargo build --manifest-path workloads_rust/Cargo.toml --release --target wasm32-wasip1
+
+build-rust:
+	cargo build --manifest-path workloads_rust/Cargo.toml --release --target x86_64-unknown-linux-musl
