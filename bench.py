@@ -74,6 +74,7 @@ def cmd_figures(args):
         ("analysis/plot_exec_compare.py", []),
         ("analysis/crossover.py", []),
         ("analysis/plot_ladder.py", []),
+        ("analysis/plot_cold_compare.py", []),
     ]:
         subprocess.run([sys.executable, script, *argv], check=True)
 

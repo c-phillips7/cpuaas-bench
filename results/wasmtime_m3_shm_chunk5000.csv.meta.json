@@ -1,0 +1,17 @@
+{
+ "argv": [
+  "workloads/model3_wasm.py",
+  "--chunk",
+  "5000"
+ ],
+ "utc": "2026-08-22T16:34:39Z",
+ "mode": "wasm",
+ "chunk": 5000,
+ "nchunks": 10,
+ "warmup": 5000,
+ "iters": 50000,
+ "cores": [
+  4,
+  6
+ ]
+}

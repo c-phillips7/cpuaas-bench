@@ -29,3 +29,14 @@
 - Translated as closely as I could the docker driver logic to wasmtime, noting differences.
     - Smoke test passes as expected
 - updated bench.py to allow for different drivers to be passed as an argument and run the relevant code, maintining the central entry point
+- built python equivalent of docker logic for wasm, but it was extremely slow (~10ms)
+    - found there is a built in delay via sys.setswitchinterval, which can be set to a lower value, which when lowered to the limit was still too slow (~0.17ms)
+- All the python logic seems to cause issues when being translated to WebAssembly, meaning all measuements there have been for just python interperitation and translation, not the desired measurement.
+- Implemented WAT (Plain english WebAssembly) to pre translate the model3_shm protocals.
+    - This allows wasm to actually work in its native WebAssembly
+- In testing wasm with WAT, found another issue with Foreign Function Interface (FFI) between parts of my python instructions and the true RTT for wasm 
+    - Here the issue comes from Python→native Wasmtime via ctypes
+    - Used a system of batching runs and taking the average to measure this toll, and try and get the real RTT
+
+# Back to Docker
+- To compare the cold startup and other analysis in models 1 and 2, to account for the introduced rust workload, a Docker equivalent is added.

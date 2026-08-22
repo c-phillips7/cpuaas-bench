@@ -1,0 +1,15 @@
+{
+ "argv": [
+  "workloads/model3_wasm.py",
+  "control"
+ ],
+ "utc": "2026-08-22T16:29:33Z",
+ "mode": "control",
+ "switch_us": null,
+ "warmup": 20,
+ "iters": 200,
+ "cores": [
+  4,
+  6
+ ]
+}
