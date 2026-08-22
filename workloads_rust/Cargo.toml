@@ -1,0 +1,15 @@
+[package]
+name = "bench-workload"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "model1"
+path = "src/model1.rs"
+
+[[bin]]
+name = "model2"
+path = "src/model2.rs"
+
+[profile.release]
+opt-level = 3

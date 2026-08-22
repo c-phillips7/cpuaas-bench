@@ -38,6 +38,12 @@ from pathlib import Path
 
 RESULTS = Path("results")
 
+RUNTIMES = ["docker", "wasmtime"]
+
+def get_driver(name):
+    from drivers.docker_driver import DockerDriver
+    from drivers.wasmtime_driver import WasmtimeDriver
+    return {"docker": DockerDriver, "wasmtime": WasmtimeDriver}[name]()
 
 def sidecar(out, extra):
     meta = {"argv": sys.argv, "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
@@ -48,19 +54,17 @@ def sidecar(out, extra):
 
 def cmd_m1(args):
     from runner import bench_model1, write_csv
-    from drivers.docker_driver import DockerDriver
     suffix = f"_{args.tag}" if args.tag else ""
-    out = RESULTS / f"docker_m1{suffix}.csv"
-    write_csv(bench_model1(DockerDriver(), reps=args.reps), out)
+    out = RESULTS / f"{args.runtime}_m1{suffix}.csv"
+    write_csv(bench_model1(get_driver(args.runtime), reps=args.reps), out)
     sidecar(out, {"reps": args.reps})
 
 
 def cmd_m2(args):
     from runner import bench_model2, write_csv
-    from drivers.docker_driver import DockerDriver
     suffix = f"_{args.tag}" if args.tag else ""
-    out = RESULTS / f"docker_m2{suffix}.csv"
-    write_csv(bench_model2(DockerDriver(), sessions=args.sessions, execs=args.execs), out)
+    out = RESULTS / f"{args.runtime}_m2{suffix}.csv"
+    write_csv(bench_model2(get_driver(args.runtime), sessions=args.sessions, execs=args.execs), out)
     sidecar(out, {"sessions": args.sessions, "execs": args.execs})
 
 
@@ -106,15 +110,17 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description="cpuaas-bench entry point")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("m1", help="Docker Model 1 cold starts")
+    s = sub.add_parser("m1", help="Model 1 cold starts")
     s.add_argument("--reps", type=int, default=30)
-    s.add_argument("--tag", help="suffix to keep this run alongside existing data")   # ADD
+    s.add_argument("--tag", help="suffix to keep this run alongside existing data")
+    s.add_argument("--runtime", choices=RUNTIMES, default="docker")
     s.set_defaults(fn=cmd_m1)
 
     s = sub.add_parser("m2", help="Docker Model 2 sessions")
     s.add_argument("--sessions", type=int, default=5)
     s.add_argument("--execs", type=int, default=30)
-    s.add_argument("--tag", help="suffix to keep this run alongside existing data")   # ADD
+    s.add_argument("--tag", help="suffix to keep this run alongside existing data")
+    s.add_argument("--runtime", choices=RUNTIMES, default="docker")
     s.set_defaults(fn=cmd_m2)
 
     s = sub.add_parser("figures", help="regenerate all figures from CSVs")

@@ -21,3 +21,11 @@
     - Similarly changed WARMUP, ITERS and condition to CLI arguments, no need to rebuld docker when trying different values.
 - Found bug where sentinel race at 50 ms netem, the shutdown packet died when the container was killed. The pong hung, so fixed with sleep of 0.5s at the end before killing process.
 - Ran full reporducibility run with the new bench.py, all looks good.
+
+# Wasamtime workings
+- Due to how wasm is built is seems rust is significantly more optimized for the workload. There is a python option, but that just baloons the size of each image, offsetting the main benefit of wasam's very fast cold start compared to docker
+    - Potentially could implement a rust workload (or some equivalent) to the docker implementation.
+- built rust based workloads based on boilerplate cargo wasm library
+- Translated as closely as I could the docker driver logic to wasmtime, noting differences.
+    - Smoke test passes as expected
+- updated bench.py to allow for different drivers to be passed as an argument and run the relevant code, maintining the central entry point
