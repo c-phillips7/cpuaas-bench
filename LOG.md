@@ -46,4 +46,20 @@
     - slight differences, but on the scale of docker vs Wasm, barely noticible
 
 # Firecracker workings
-- 
+- Install: Firecracker v1.16.1 release binary. The getting-started kernel script returned an empty key because the v1.16 CI bucket had no kernels yet; a 385 KB XML listing got saved as vmlinux. Spotted by size (a kernel is ~40 MB). Listed the v1.15 bucket by hand, took vmlinux-6.1.155 plus its .config, recorded the pairing.
+- Rootfs: 32 MiB ext4, loop-mounted, only model1, model2 (the musl static-pie binaries, file string) and a /dev/console node. No shell, no libc. Kernel config confirmed DEVTMPFS_MOUNT=y, so the node is belt-and-braces.
+- Workload runs as init (init=/model1) so the guest starts nothing but the workload, same fairness argument as the _rs Docker control. No networking at all; the serial console is the protocol channel.
+- First verbose boot: Run /model1 as init process at 0.806 s, READY, 1000 → 332833500. Ctrl-D produced Attempted to kill init! exitcode=0x0, Rebooting in 1 seconds, Firecracker exited. So EOF-shutdown works over serial.
+Half-second gap in the boot log between clk: Disabling unused clocks and AT Raw Set 2 keyboard: the kernel probing a PS/2 keyboard that does not exist. Added i8042.noaux i8042.nomux i8042.nopnp i8042.dumbkbd (Firecracker's own integration-test flags): init at 0.294 s.
+- Added quiet boot (quiet loglevel=0): READY is the first byte the guest writes; even the panic trace is silent because the kernel only raises the console level on panic when it was non-zero.
+- Driver made, same five methods as wasmtime. prepare() verifies artefacts and writes fc/<workload>.json rather than building (the rootfs build needs sudo; lives in the Makefile). Added a staleness check: refuses a rootfs older than the guest binary. base.py docstring amended to match.
+- bench.py integration: three lines (RUNTIMES, get_driver, usage note); plot_cold_compare one line; runner zero. No leftover VMMs after 35 boots (pgrep firecracker empty).
+- Result I did not expect: Firecracker boots a whole kernel faster than Docker starts a container (119 vs 192 ms). Order is Wasm < FC < Docker, memory the other way round (5.5 / 16.5 / 47.6 MB). Plan had predicted 150 to 300 ms.
+
+# Clean up, refactors and demo
+- results/ had 65 files flat. Moved to results/<runtime>/ (docker 10, wasmtime 9, firecracker 2, host 8 results + sidecars) and results/figures/. Folder = filename's first token.
+- bench.py figures only ran 5 of the 7 figure scripts (executor sweep and chunk fit were missing). Fixed; "all figures regenerate" is now true. __pycache__ was tracked; untracked and ignored.
+- Ladder figure: added the Wasm rung and the Python-threads control (8 series, per-series column). Control lands on top of the 10 ms netem rung; SHM+netem is drawn exactly over SHM.
+- Demo audit found wasm M3 had no --tag, so its overwrite guard had no escape; added. fc-fetch Makefile target pinned to the exact versions. Demo gained build and interactive-boot options.
+- Demo ran int a bug: after the interactive Firecracker boot, Python's input() returned EOF forever (menu spammed). Shell was fine afterwards (stty -a normal), so it was Python's stdin, not the terminal. Fix: reopen sys.stdin from /dev/tty after the boot; exit cleanly on EOF/Ctrl-C.
+- README written (AI-drafted, edited by me); wasmtime CLI 47.0.3 confirmed installed via the official installer (~/.wasmtime/bin).
