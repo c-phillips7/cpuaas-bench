@@ -177,12 +177,13 @@ WAT = r"""
 # ----------------------------------------------------------------------------
 
 def derive_out(args):
+    tag = f"_{args.tag}" if args.tag else ""
     # filenames derive from parameters - the manual-naming error class stays dead
     if args.mode == "control":
         cond = f"si{args.switch_us}us" if args.switch_us is not None else "default"
-        return Path("results/host") / f"host_m3_pythreads_{cond}.csv"
+        return Path("results/host") / f"host_m3_pythreads_{cond}{tag}.csv"
     cond = f"_chunk{args.chunk}" if args.chunk != 1000 else ""
-    return Path("results/wasmtime") / f"wasmtime_m3_shm{cond}.csv"
+    return Path("results/wasmtime") / f"wasmtime_m3_shm{cond}{tag}.csv"
 
 
 def write_output(out, colname, values, extra):
@@ -318,6 +319,7 @@ if __name__ == "__main__":
     p.add_argument("--iters", type=int)
     p.add_argument("--core-ping", type=int, default=4)
     p.add_argument("--core-pong", type=int, default=6)
+    p.add_argument("--tag", help="suffix to keep this run alongside existing data")
     a = p.parse_args()
 
     if a.mode == "control":

@@ -43,7 +43,7 @@ class FirecrackerDriver(RuntimeDriver):
             # Test added to mirror how something like docker build would guarentee the image.
         for artefact in (FC_BIN, KERNEL, ROOTFS):
             if not artefact.exists():
-                raise FileNotFoundError(f"{artefact} missing; run make build-fc-rootfs")
+                raise FileNotFoundError(f"{artefact} missing; run make fc-fetch build-fc-rootfs")
         guest = Path("workloads_rust/target/x86_64-unknown-linux-musl/release") / binary
         if ROOTFS.stat().st_mtime < guest.stat().st_mtime:
             raise RuntimeError("fc/rootfs.ext4 is older than the guest binary; run make build-fc-rootfs")

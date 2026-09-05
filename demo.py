@@ -3,8 +3,8 @@
 # demo.py - guided front-end for running the benchmark suite (viva demo aid).
 # WRAPPER ONLY: this file knows no benchmark logic. It builds the exact same
 # command lines a user would type, SHOWS the command first, then runs it via
-# bench.py / workloads/model3_wasm.py. One source of truth; every guard and
-# overwrite policy stays in the scripts that own it - this menu just narrates.
+# bench.py / workloads/model3_wasm.py / make. One source of truth; every guard
+# and overwrite policy stays in the scripts that own it - this menu narrates.
 # Run from the repo root: python3 demo.py
 # =============================================================================
 import subprocess
@@ -37,6 +37,18 @@ def confirm_and_run(cmd):
         print("skipped.")
 
 
+def ask_tag(cmd, policy):
+    # the overwrite policy differs by tier; say which one applies, then offer --tag
+    print(f"note: {policy}")
+    tag = ask("tag to keep this run alongside existing data (blank = none)", "")
+    return cmd + (["--tag", tag] if tag else [])
+
+
+REGEN = "an untagged m1/m2 run OVERWRITES the canonical file (regeneration policy)"
+GUARD = ("raw M3 runs are GUARDED: an existing output file is refused, never overwritten; "
+         "repeat a condition with a tag, or move the old file first")
+
+
 def pick_workload(runtime, model):
     # docker can run either the python or the rust workload; firecracker guests
     # are native binaries only (the driver refuses anything else); wasmtime's
@@ -50,16 +62,23 @@ def pick_workload(runtime, model):
     return []
 
 
+def opt_build():
+    # prerequisites, in dependency order; each target is idempotent.
+    # build-fc-rootfs needs sudo (loop mount) and fc-fetch needs the network.
+    print("targets: build (docker image) build-wasm build-rust fc-fetch build-fc-rootfs network")
+    which = ask("which", "all", ["all", "docker", "wasm", "rust", "firecracker", "network"])
+    targets = {"all": ["build", "network", "build-wasm", "build-rust", "fc-fetch", "build-fc-rootfs"],
+               "docker": ["build", "network"], "wasm": ["build-wasm"], "rust": ["build-rust"],
+               "firecracker": ["build-rust", "fc-fetch", "build-fc-rootfs"], "network": ["network"]}[which]
+    confirm_and_run(["make", *targets])
+
+
 def opt_m1():
     cmd = [sys.executable, "bench.py", "m1"]
     runtime = ask("runtime", "docker", RUNTIMES)
     cmd += ["--runtime", runtime] + pick_workload(runtime, 1)
     cmd += ["--reps", ask("reps", "30")]
-    print("note: an untagged run OVERWRITES the canonical file (regeneration policy)")
-    tag = ask("tag to keep it separate (blank = overwrite canonical)", "")
-    if tag:
-        cmd += ["--tag", tag]
-    confirm_and_run(cmd)
+    confirm_and_run(ask_tag(cmd, REGEN))
 
 
 def opt_m2():
@@ -67,11 +86,7 @@ def opt_m2():
     runtime = ask("runtime", "docker", RUNTIMES)
     cmd += ["--runtime", runtime] + pick_workload(runtime, 2)
     cmd += ["--sessions", ask("sessions", "5"), "--execs", ask("execs", "30")]
-    print("note: an untagged run OVERWRITES the canonical file (regeneration policy)")
-    tag = ask("tag to keep it separate (blank = overwrite canonical)", "")
-    if tag:
-        cmd += ["--tag", tag]
-    confirm_and_run(cmd)
+    confirm_and_run(ask_tag(cmd, REGEN))
 
 
 def opt_m3_docker():
@@ -82,8 +97,11 @@ def opt_m3_docker():
     netem = ask("netem delay e.g. 10ms (blank = none)", "")
     if netem:
         cmd += ["--netem", netem]
+    cmd = ask_tag(cmd, GUARD)
     subprocess.run(cmd)
-    print("\n(paste the pair above into two terminals, first-listed first)")
+    print("\n(paste the pair above into two terminals, first-listed first;"
+          " needs `make build network` once. If ping is refused by the guard,"
+          " the waiting pong is stopped with `make clean`)")
 
 
 def opt_m3_wasm():
@@ -98,16 +116,25 @@ def opt_m3_wasm():
         chunk = ask("chunk (round trips per guest call)", "1000")
         if chunk != "1000":
             cmd += ["--chunk", chunk]
-    # output guard lives in the script itself; it will refuse an existing file
-    confirm_and_run(cmd)
+    confirm_and_run(ask_tag(cmd, GUARD))
+
+
+def opt_fc_gate():
+    # the most watchable thirty seconds: a kernel boots into the workload binary.
+    print("a Firecracker microVM boots with the workload as init; type 1000 + Enter"
+          " (expect 332833500), then Ctrl-D to exit. Ctrl-C goes to the guest and"
+          " does nothing; `pkill firecracker` from another terminal is the escape hatch.")
+    confirm_and_run(["make", "fc-gate"])
 
 
 OPTIONS = {
+    "0": ("Build prerequisites (docker image, wasm + musl binaries, firecracker assets)", opt_build),
     "1": ("Model 1 cold starts", opt_m1),
     "2": ("Model 2 sessions", opt_m2),
     "3": ("Model 3: docker shm/tcp (prints two-terminal pair)", opt_m3_docker),
     "4": ("Model 3: wasm / python-threads control", opt_m3_wasm),
-    "5": ("Regenerate all figures (results/figures/)",
+    "5": ("Firecracker: boot the guest interactively (make fc-gate)", opt_fc_gate),
+    "6": ("Regenerate all figures (results/figures/)",
           lambda: confirm_and_run([sys.executable, "bench.py", "figures"])),
 }
 
