@@ -27,6 +27,7 @@
 #     be destroyed by a forgotten flag.
 #   - m1/m2 untagged: OVERWRITE the canonical file - regeneration is the
 #     normal workflow for these. Use --tag to keep a comparison run.
+#   - --runtime firecracker requires --workload model1_rs / model2_rs (native guests only)
 #   - figures: always overwritten; regenerable from CSVs at any time.
 # =============================================================================
 import argparse
@@ -38,12 +39,13 @@ from pathlib import Path
 
 RESULTS = Path("results")
 
-RUNTIMES = ["docker", "wasmtime"]
+RUNTIMES = ["docker", "wasmtime", "firecracker"]
 
 def get_driver(name):
     from drivers.docker_driver import DockerDriver
     from drivers.wasmtime_driver import WasmtimeDriver
-    return {"docker": DockerDriver, "wasmtime": WasmtimeDriver}[name]()
+    from drivers.firecracker_driver import FirecrackerDriver
+    return {"docker": DockerDriver, "wasmtime": WasmtimeDriver, "firecracker": FirecrackerDriver}[name]()
 
 def sidecar(out, extra):
     meta = {"argv": sys.argv, "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}

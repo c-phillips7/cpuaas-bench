@@ -3,9 +3,10 @@ import sys
 import matplotlib.pyplot as plt
 
 # Overlay the Model 1 cold-start CDFs of every CSV given on the command line
-    # default se to two cannonical runtime files
+    # default set to cannonical runtime files
 paths = sys.argv[1:] or ["results/docker_m1.csv", "results/wasmtime_m1.csv",
-                         "results/docker_m1_model1_rs.csv"]
+                         "results/docker_m1_model1_rs.csv",
+                         "results/firecracker_m1_model1_rs.csv"]
 
 for path in paths:
     with open(path) as f:
@@ -24,6 +25,7 @@ plt.xlabel("Cold start latency (ms, log scale)")
 plt.ylabel("Fraction of runs ≤ x")
 plt.title("Model 1 cold starts by runtime")
 plt.grid(True, alpha=0.3, which="both")
-plt.legend()
+plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)
+plt.tight_layout()
 plt.savefig("results/m1_cold_compare.png", dpi=150)
 print("wrote results/m1_cold_compare.png")

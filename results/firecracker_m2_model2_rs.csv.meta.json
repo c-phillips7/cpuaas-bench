@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "bench.py",
+  "m2",
+  "--runtime",
+  "firecracker",
+  "--workload",
+  "model2_rs"
+ ],
+ "utc": "2026-09-04T20:11:39Z",
+ "sessions": 5,
+ "execs": 30,
+ "workload": "model2_rs"
+}

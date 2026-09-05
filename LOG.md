@@ -44,3 +44,6 @@
 - Added _rs to the naming convention, and added logic to check for _rs as a siffix to log the workload as rust based.
 - Re ran model 1 and 2 for docker (python workload), and new rust workloads to give clean comparison
     - slight differences, but on the scale of docker vs Wasm, barely noticible
+
+# Firecracker workings
+- 

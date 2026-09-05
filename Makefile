@@ -18,3 +18,11 @@ build-wasm:
 
 build-rust:
 	cargo build --manifest-path workloads_rust/Cargo.toml --release --target x86_64-unknown-linux-musl
+
+build-fc-rootfs: build-rust
+	@echo "Assembling the Firecracker guest rootfs (32 MiB ext4: two musl binaries + /dev/console)"
+	fc/build_rootfs.sh
+
+fc-gate:
+	@echo "Booting the Firecracker guest interactively. Ctrl-D to exit."
+	fc/firecracker --no-api --config-file fc/gate.json
