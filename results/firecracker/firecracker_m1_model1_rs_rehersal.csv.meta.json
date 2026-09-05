@@ -1,0 +1,17 @@
+{
+ "argv": [
+  "bench.py",
+  "m1",
+  "--runtime",
+  "firecracker",
+  "--workload",
+  "model1_rs",
+  "--reps",
+  "30",
+  "--tag",
+  "rehersal"
+ ],
+ "utc": "2026-09-05T12:53:16Z",
+ "reps": 30,
+ "workload": "model1_rs"
+}

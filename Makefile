@@ -36,5 +36,5 @@ build-fc-rootfs: build-rust
 	fc/build_rootfs.sh
 
 fc-gate:
-	@echo "Booting the Firecracker guest interactively. Ctrl-D to exit."
-	fc/firecracker --no-api --config-file fc/gate.json
+	@echo "Booting the Firecracker guest interactively: wait for READY, type 1000 + Enter, then Ctrl-D once to exit."
+	fc/firecracker --no-api --config-file fc/gate.json --log-path /dev/null

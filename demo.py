@@ -125,6 +125,14 @@ def opt_fc_gate():
           " (expect 332833500), then Ctrl-D to exit. Ctrl-C goes to the guest and"
           " does nothing; `pkill firecracker` from another terminal is the escape hatch.")
     confirm_and_run(["make", "fc-gate"])
+    # firecracker drove the terminal in raw mode and consumed a Ctrl-D; whatever
+    # state that leaves fd 0 in, reset the tty and reopen the menu's stdin from
+    # the controlling terminal so input() gets a clean handle
+    subprocess.run(["stty", "sane"])
+    try:
+        sys.stdin = open("/dev/tty")
+    except OSError:
+        pass
 
 
 OPTIONS = {
@@ -144,7 +152,11 @@ if __name__ == "__main__":
         for k, (label, _) in OPTIONS.items():
             print(f"{k}) {label}")
         print("q) quit")
-        choice = ask("select", None, [*OPTIONS, "q"])
-        if choice == "q":
+        try:
+            choice = ask("select", None, [*OPTIONS, "q"])
+            if choice == "q":
+                break
+            OPTIONS[choice][1]()
+        except (EOFError, KeyboardInterrupt):
+            print("\n(exiting demo)")
             break
-        OPTIONS[choice][1]()

@@ -1,0 +1,17 @@
+{
+ "argv": [
+  "workloads/model3_wasm.py",
+  "--tag",
+  "rehersal"
+ ],
+ "utc": "2026-09-05T12:56:48Z",
+ "mode": "wasm",
+ "chunk": 1000,
+ "nchunks": 50,
+ "warmup": 5000,
+ "iters": 50000,
+ "cores": [
+  4,
+  6
+ ]
+}
