@@ -10,6 +10,8 @@
 import subprocess
 import sys
 
+RUNTIMES = ["docker", "wasmtime", "firecracker"]
+
 
 def ask(prompt, default=None, choices=None):
     # one prompt helper for everything: shows choices and [default],
@@ -35,14 +37,23 @@ def confirm_and_run(cmd):
         print("skipped.")
 
 
+def pick_workload(runtime, model):
+    # docker can run either the python or the rust workload; firecracker guests
+    # are native binaries only (the driver refuses anything else); wasmtime's
+    # module name is the plain workload name
+    if runtime == "docker":
+        w = ask("workload", f"model{model}", [f"model{model}", f"model{model}_rs"])
+        return [] if w == f"model{model}" else ["--workload", w]
+    if runtime == "firecracker":
+        print(f"note: firecracker guests are native binaries -> --workload model{model}_rs")
+        return ["--workload", f"model{model}_rs"]
+    return []
+
+
 def opt_m1():
     cmd = [sys.executable, "bench.py", "m1"]
-    runtime = ask("runtime", "docker", ["docker", "wasmtime"])
-    cmd += ["--runtime", runtime]
-    if runtime == "docker":
-        w = ask("workload", "model1", ["model1", "model1_rs"])
-        if w != "model1":
-            cmd += ["--workload", w]
+    runtime = ask("runtime", "docker", RUNTIMES)
+    cmd += ["--runtime", runtime] + pick_workload(runtime, 1)
     cmd += ["--reps", ask("reps", "30")]
     print("note: an untagged run OVERWRITES the canonical file (regeneration policy)")
     tag = ask("tag to keep it separate (blank = overwrite canonical)", "")
@@ -53,8 +64,8 @@ def opt_m1():
 
 def opt_m2():
     cmd = [sys.executable, "bench.py", "m2"]
-    runtime = ask("runtime", "docker", ["docker", "wasmtime"])
-    cmd += ["--runtime", runtime]
+    runtime = ask("runtime", "docker", RUNTIMES)
+    cmd += ["--runtime", runtime] + pick_workload(runtime, 2)
     cmd += ["--sessions", ask("sessions", "5"), "--execs", ask("execs", "30")]
     print("note: an untagged run OVERWRITES the canonical file (regeneration policy)")
     tag = ask("tag to keep it separate (blank = overwrite canonical)", "")
@@ -96,7 +107,7 @@ OPTIONS = {
     "2": ("Model 2 sessions", opt_m2),
     "3": ("Model 3: docker shm/tcp (prints two-terminal pair)", opt_m3_docker),
     "4": ("Model 3: wasm / python-threads control", opt_m3_wasm),
-    "5": ("Regenerate all figures",
+    "5": ("Regenerate all figures (results/figures/)",
           lambda: confirm_and_run([sys.executable, "bench.py", "figures"])),
 }
 

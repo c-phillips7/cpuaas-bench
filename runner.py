@@ -71,7 +71,7 @@ def bench_model2(driver, sessions=5, execs=30, workload="model2") :
 
 # Write results to a CSV file
 def write_csv(rows, path):
-    RESULTS.mkdir(exist_ok=True)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=rows[0].keys())
         w.writeheader()
@@ -80,6 +80,6 @@ def write_csv(rows, path):
 # Main execution
 if __name__ == "__main__":
     rows = bench_model1(DockerDriver())
-    write_csv(rows, RESULTS / "docker_model1.csv")
+    write_csv(rows, RESULTS / "docker" / "docker_model1.csv")
     rows2 = bench_model2(DockerDriver())
-    write_csv(rows2, RESULTS / "docker_model2.csv")
+    write_csv(rows2, RESULTS / "docker" / "docker_model2.csv")

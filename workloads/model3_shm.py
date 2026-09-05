@@ -17,12 +17,12 @@ import json
 # Rebuild the image after any workload change: make build
 #
 # 1) Host baseline (no isolation - the control), two terminals from repo root:
-#   python3 workloads/model3_shm.py ping --core 4 --out results/host_m3_shm.csv
+#   python3 workloads/model3_shm.py ping --core 4 --out results/host/host_m3_shm.csv
 #   python3 workloads/model3_shm.py pong --core 6
 #
 # 2) Cross-container (the Model 3 experiment). Donor owns a shareable IPC
 #    namespace; peer joins it, so both see the same /dev/shm:
-#   docker run --rm --name m3-ping --ipc=shareable --cpuset-cpus=4 -v "$PWD/results:/results" bench-py python -u model3_shm.py ping --core 4 --out /results/docker_m3_shm.csv
+#   docker run --rm --name m3-ping --ipc=shareable --cpuset-cpus=4 -v "$PWD/results:/results" bench-py python -u model3_shm.py ping --core 4 --out /results/docker/docker_m3_shm.csv
 #   docker run --rm --name m3-pong --ipc=container:m3-ping --cpuset-cpus=6 bench-py python -u model3_shm.py pong --core 6
 #
 # 3) Negative control: run (2) with the peer's --ipc flag removed. Expected:
@@ -32,7 +32,7 @@ import json
 # 4) Netem non-effect (tight-coupling demonstration) - largest delay on the
 #    ping side; expected IDENTICAL results to (2), netem shapes network
 #    interfaces and the SHM path never touches one:
-#   docker run --rm --name m3-ping --ipc=shareable --cpuset-cpus=4 --cap-add NET_ADMIN -v "$PWD/results:/results" bench-py sh -c "tc qdisc add dev eth0 root netem delay 50ms && python -u model3_shm.py ping --core 4 --out /results/docker_m3_shm_netem50ms.csv"
+#   docker run --rm --name m3-ping --ipc=shareable --cpuset-cpus=4 --cap-add NET_ADMIN -v "$PWD/results:/results" bench-py sh -c "tc qdisc add dev eth0 root netem delay 50ms && python -u model3_shm.py ping --core 4 --out /results/docker/docker_m3_shm_netem50ms.csv"
 #   docker run --rm --name m3-pong --ipc=container:m3-ping --cpuset-cpus=6 bench-py python -u model3_shm.py pong --core 6
 #
 # Expected magnitudes: p50 ~0.3us host and container (~500,000x below a Docker
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("role", choices=["ping", "pong"])
     p.add_argument("--core", type=int, required=True)
-    p.add_argument("--out", default="results/m3_host.csv")
+    p.add_argument("--out", default="results/host/host_m3_shm.csv")
     p.add_argument("--warmup", type=int, default=5_000)
     p.add_argument("--iters", type=int, default=50_000)
     p.add_argument("--condition", default="baseline",
@@ -120,6 +120,8 @@ if __name__ == "__main__":
     a = p.parse_args()
     if a.role == "ping" and os.path.exists(a.out):
         sys.exit(f"refusing to overwrite {a.out} - move it or pick a new --out name")
+    if a.role == "ping":
+        os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     os.sched_setaffinity(0, {a.core})
     m = open_seg(create=(a.role == "ping"))
     ping(m, a.out, a.warmup, a.iters, a.condition) if a.role == "ping" else pong(m)

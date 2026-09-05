@@ -1,15 +1,15 @@
 import csv
-import matplotlib.pyplot as plt
-
-# The who-executes figure: python-threads import csv
 import glob
 import re
 import matplotlib.pyplot as plt
 
+# The who-executes figure: python-threads control RTT vs GIL switch interval,
+# with the wasm guests' RTT on the same buffer as the reference line.
+
 # discover all control conditions from the filenames; the 'default' file is
 # the untouched interpreter (~5000us switch interval)
 data = []
-for path in glob.glob("results/host_m3_pythreads_*.csv"):
+for path in glob.glob("results/host/host_m3_pythreads_*.csv"):
     m = re.search(r"_si(\d+)us", path)
     si = int(m.group(1)) if m else 5000
     with open(path) as f:
@@ -21,7 +21,7 @@ xs = [si for si, _ in data]
 p50s = [v[len(v) // 2] / 1e3 for _, v in data]
 p99s = [v[int(len(v) * 0.99)] / 1e3 for _, v in data]
 
-with open("results/wasmtime_m3_shm.csv") as f:
+with open("results/wasmtime/wasmtime_m3_shm.csv") as f:
     w = sorted(float(r["chunk_mean_rtt_ns"]) for r in csv.DictReader(f))
 wasm_us = w[len(w) // 2] / 1e3
 
@@ -36,5 +36,5 @@ plt.ylabel("ping-pong RTT (µs, log)")
 plt.title("Same shared memory, different executor")
 plt.grid(True, alpha=0.3, which="both")
 plt.legend(fontsize=8)
-plt.savefig("results/m3_executor_sweep.png", dpi=150)
-print("wrote results/m3_executor_sweep.png")
+plt.savefig("results/figures/m3_executor_sweep.png", dpi=150)
+print("wrote results/figures/m3_executor_sweep.png")

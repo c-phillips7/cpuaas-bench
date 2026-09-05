@@ -6,19 +6,24 @@
 #
 # USAGE
 #   python3 bench.py m1 [--reps 30] [--tag NAME]
-#     Docker Model 1 cold starts -> results/docker_m1[_NAME].csv + .meta.json
+#     Model 1 cold starts -> results/<runtime>/<runtime>_m1[_WORKLOAD][_NAME].csv + .meta.json
 #
 #   python3 bench.py m2 [--sessions 5] [--execs 30] [--tag NAME]
-#     Docker Model 2 sessions -> results/docker_m2[_NAME].csv + .meta.json
+#     Model 2 sessions -> results/<runtime>/<runtime>_m2[_WORKLOAD][_NAME].csv + .meta.json
 #
 #   python3 bench.py figures
-#     Regenerate every PNG from the CSVs currently in results/.
+#     Regenerate every PNG into results/figures/ from the CSVs under results/<runtime>/.
 #     Overwrites freely: figures are derived artefacts, cheap by design.
 #
 #   python3 bench.py m3 {shm|tcp} [--netem 10ms] [--tag NAME]
 #     Prints the command pair for an M3 experiment, output name derived
 #     from the parameters (e.g. docker_m3_tcp_netem10ms[_NAME].csv),
 #     with start order labelled. Paste into two terminals.
+#
+# RESULTS LAYOUT: results/<runtime>/ holds that runtime's CSVs and .meta.json
+#   sidecars (docker/, wasmtime/, firecracker/, and host/ for un-sandboxed
+#   baselines and controls); results/figures/ holds every PNG. The folder is
+#   always the filename's first token, so any file can be re-filed by name.
 #
 # OVERWRITE POLICY (three tiers, deliberate):
 #   - M3 raw runs: the ping-pong scripts' own guard REFUSES existing files.
@@ -38,6 +43,12 @@ import time
 from pathlib import Path
 
 RESULTS = Path("results")
+
+def out_path(runtime, filename):
+    # results/<runtime>/<filename>; the runtime folder is created on first use
+    p = RESULTS / runtime / filename
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
 
 RUNTIMES = ["docker", "wasmtime", "firecracker"]
 
@@ -59,7 +70,7 @@ def cmd_m1(args):
     w = args.workload or "model1"
     wsuffix = f"_{w}" if w != "model1" else ""
     suffix = f"_{args.tag}" if args.tag else ""
-    out = RESULTS / f"{args.runtime}_m1{wsuffix}{suffix}.csv"
+    out = out_path(args.runtime, f"{args.runtime}_m1{wsuffix}{suffix}.csv")
     write_csv(bench_model1(get_driver(args.runtime), reps=args.reps, workload=w), out)
     sidecar(out, {"reps": args.reps, "workload": w})
 
@@ -69,14 +80,15 @@ def cmd_m2(args):
     w = args.workload or "model2"
     wsuffix = f"_{w}" if w != "model2" else ""
     suffix = f"_{args.tag}" if args.tag else ""
-    out = RESULTS / f"{args.runtime}_m2{wsuffix}{suffix}.csv"
+    out = out_path(args.runtime, f"{args.runtime}_m2{wsuffix}{suffix}.csv")
     write_csv(bench_model2(get_driver(args.runtime), sessions=args.sessions, execs=args.execs, workload=w), out)
     sidecar(out, {"sessions": args.sessions, "execs": args.execs, "workload": w})
 
 
 def cmd_figures(args):
+    (RESULTS / "figures").mkdir(parents=True, exist_ok=True)
     for script, argv in [
-        ("analysis/plot_cdf.py", ["results/docker_m1.csv"]),
+        ("analysis/plot_cdf.py", ["results/docker/docker_m1.csv"]),
         ("analysis/plot_exec_compare.py", []),
         ("analysis/crossover.py", []),
         ("analysis/plot_ladder.py", []),
@@ -89,7 +101,8 @@ def cmd_m3(args):
     mech = args.mechanism
     cond = f"_netem{args.netem}" if args.netem else ""
     suffix = f"_{args.tag}" if args.tag else ""
-    out = f"/results/docker_m3_{mech}{cond}{suffix}.csv"
+    (RESULTS / "docker").mkdir(parents=True, exist_ok=True)   # container writes into host results/docker/
+    out = f"/results/docker/docker_m3_{mech}{cond}{suffix}.csv"
     tc = f'tc qdisc add dev eth0 root netem delay {args.netem} && ' if args.netem else ""
     cap = "--cap-add NET_ADMIN " if args.netem else ""
     condition = f"netem{args.netem}" if args.netem else "baseline"                    # NEW

@@ -14,7 +14,7 @@ p.add_argument("--iters", type=int, default=50_000,
 args = p.parse_args()
 
 points = []   # (chunk_size, mean_of_chunk_means_ns)
-for path in glob.glob("results/wasmtime_m3_shm*.csv"):
+for path in glob.glob("results/wasmtime/wasmtime_m3_shm*.csv"):
     try:
         with open(f"{path}.meta.json") as f:
             meta = json.load(f)
@@ -50,6 +50,6 @@ plt.title(f"FFI toll calibration ({args.iters:,} round trips per point)")
 plt.grid(True, alpha=0.3)
 plt.legend(fontsize=9)
 suffix = "" if args.iters == 50_000 else f"_iters{args.iters}"
-plt.savefig(f"results/m3_chunk_fit{suffix}.png", dpi=150)
-print(f"wrote results/m3_chunk_fit{suffix}.png  "
+plt.savefig(f"results/figures/m3_chunk_fit{suffix}.png", dpi=150)
+print(f"wrote results/figures/m3_chunk_fit{suffix}.png  "
       f"(true RTT ~{intercept:.0f} ns, toll ~{slope/1e3:.1f} us/call, n={n} points)")

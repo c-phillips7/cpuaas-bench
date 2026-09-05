@@ -21,16 +21,16 @@ import json
 #
 # 1) Host loopback baseline, two terminals from repo root:
 #   python3 workloads/model3_tcp.py pong --core 6
-#   python3 workloads/model3_tcp.py ping --core 4 --out results/host_m3_tcp.csv
+#   python3 workloads/model3_tcp.py ping --core 4 --out results/host/host_m3_tcp.csv
 #
 # 2) Container-to-container over a user-defined bridge (Docker DNS resolves the
 #    server by name). Once: docker network create benchnet
 #   docker run --rm --name m3-pong --network benchnet --cpuset-cpus=6 bench-py python -u model3_tcp.py pong --host 0.0.0.0 --core 6
-#   docker run --rm --name m3-ping --network benchnet --cpuset-cpus=4 -v "$PWD/results:/results" bench-py python -u model3_tcp.py ping --host m3-pong --core 4 --out /results/docker_m3_tcp.csv
+#   docker run --rm --name m3-ping --network benchnet --cpuset-cpus=4 -v "$PWD/results:/results" bench-py python -u model3_tcp.py ping --host m3-pong --core 4 --out /results/docker/docker_m3_tcp.csv
 #
 # 3) WAN emulation sweep: ping container applies egress delay to its own eth0
 #    (RTT ~= baseline + delay). One run per delay; change BOTH delay and --out:
-#   docker run --rm --name m3-ping --network benchnet --cpuset-cpus=4 --cap-add NET_ADMIN -v "$PWD/results:/results" bench-py sh -c "tc qdisc add dev eth0 root netem delay 10ms && python -u model3_tcp.py ping --host m3-pong --core 4 --out /results/docker_m3_tcp_netem10ms.csv"
+#   docker run --rm --name m3-ping --network benchnet --cpuset-cpus=4 --cap-add NET_ADMIN -v "$PWD/results:/results" bench-py sh -c "tc qdisc add dev eth0 root netem delay 10ms && python -u model3_tcp.py ping --host m3-pong --core 4 --out /results/docker/docker_m3_tcp_netem10ms.csv"
 #    50ms run: cut WARMUP to 200 / ITERS to 2000 first (else ~45min), make
 #    build, run, restore constants, make build again; note the reduced n.
 #
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     p.add_argument("role", choices=["ping", "pong"])
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--core", type=int, required=True)
-    p.add_argument("--out", default="results/m3_tcp.csv")
+    p.add_argument("--out", default="results/host/host_m3_tcp.csv")
     p.add_argument("--warmup", type=int, default=5_000)
     p.add_argument("--iters", type=int, default=50_000)
     p.add_argument("--condition", default="baseline",
@@ -110,5 +110,7 @@ if __name__ == "__main__":
     # Added check for same file name when trying different delays
     if a.role == "ping" and os.path.exists(a.out):
         sys.exit(f"refusing to overwrite {a.out} - move it or pick a new --out name")
+    if a.role == "ping":
+        os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     os.sched_setaffinity(0, {a.core})
     ping(a.host, a.out, a.warmup, a.iters, a.condition) if a.role == "ping" else pong(a.host)

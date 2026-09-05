@@ -14,4 +14,7 @@ plt.xlabel("Cold start latency (ms)")
 plt.ylabel("Fraction of runs ≤ x")
 plt.title(f"Docker Model 1 cold starts (n={n})")
 plt.grid(True, alpha=0.3)
-plt.savefig(path.replace(".csv", "_cdf.png"), dpi=150)
+# figures live in results/figures/, named after the input CSV
+out = "results/figures/" + path.rsplit("/", 1)[-1].replace(".csv", "_cdf.png")
+plt.savefig(out, dpi=150)
+print(f"wrote {out}")

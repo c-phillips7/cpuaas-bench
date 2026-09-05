@@ -6,9 +6,9 @@ def median_col(path, col):
     with open(path) as f:
         return statistics.median(float(r[col]) for r in csv.DictReader(f))
 
-cold = median_col("results/docker_m1.csv", "cold_start_ms")
-exec1 = median_col("results/docker_m1.csv", "exec_ms")
-warm = median_col("results/docker_m2.csv", "warm_exec_ms")
+cold = median_col("results/docker/docker_m1.csv", "cold_start_ms")
+exec1 = median_col("results/docker/docker_m1.csv", "exec_ms")
+warm = median_col("results/docker/docker_m2.csv", "warm_exec_ms")
 
 # Cost of serving N requests:
 #   Model 1: N * (cold + exec)   -- every request pays a cold start
@@ -29,4 +29,5 @@ plt.ylabel("Cumulative cost (ms)")
 plt.title("Model 1 vs Model 2 cumulative cost (Docker, medians)")
 plt.legend()
 plt.grid(True, alpha=0.3)
-plt.savefig("results/docker_crossover.png", dpi=150)
+plt.savefig("results/figures/docker_crossover.png", dpi=150)
+print("wrote results/figures/docker_crossover.png")

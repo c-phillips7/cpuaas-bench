@@ -180,12 +180,13 @@ def derive_out(args):
     # filenames derive from parameters - the manual-naming error class stays dead
     if args.mode == "control":
         cond = f"si{args.switch_us}us" if args.switch_us is not None else "default"
-        return Path("results") / f"host_m3_pythreads_{cond}.csv"
+        return Path("results/host") / f"host_m3_pythreads_{cond}.csv"
     cond = f"_chunk{args.chunk}" if args.chunk != 1000 else ""
-    return Path("results") / f"wasmtime_m3_shm{cond}.csv"
+    return Path("results/wasmtime") / f"wasmtime_m3_shm{cond}.csv"
 
 
 def write_output(out, colname, values, extra):
+    out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as f:
         f.write(colname + "\n")
         f.writelines(f"{v}\n" for v in values)

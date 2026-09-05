@@ -9,8 +9,8 @@ def cdf(path, col):
 
 
 # Plotting logic
-x1, y1 = cdf("results/docker_m1.csv", "exec_ms")
-x2, y2 = cdf("results/docker_m2.csv", "warm_exec_ms")
+x1, y1 = cdf("results/docker/docker_m1.csv", "exec_ms")
+x2, y2 = cdf("results/docker/docker_m2.csv", "warm_exec_ms")
 plt.step(x1, y1, where="post", label="Model 1 exec (always first invocation)")
 plt.step(x2, y2, where="post", label="Model 2 warm exec")
 plt.xlabel("Execution latency (ms)")
@@ -18,4 +18,5 @@ plt.ylabel("Fraction of runs ≤ x")
 plt.title("Execution latency: first-invocation vs warm (Docker)")
 plt.legend()
 plt.grid(True, alpha=0.3)
-plt.savefig("results/docker_exec_compare.png", dpi=150)
+plt.savefig("results/figures/docker_exec_compare.png", dpi=150)
+print("wrote results/figures/docker_exec_compare.png")
