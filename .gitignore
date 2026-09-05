@@ -1,4 +1,5 @@
 .env
+.venv
 fc/firecracker
 fc/vmlinux
 fc/rootfs.ext4
