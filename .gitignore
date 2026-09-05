@@ -3,3 +3,4 @@ CLAUDE.md
 fc/firecracker
 fc/vmlinux
 fc/rootfs.ext4
+__pycache__/
