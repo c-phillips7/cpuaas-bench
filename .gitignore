@@ -4,4 +4,5 @@ fc/firecracker
 fc/vmlinux
 fc/rootfs.ext4
 __pycache__/
-sync.shworkloads_rust/target/
+sync.sh
+workloads_rust/target/
