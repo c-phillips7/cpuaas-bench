@@ -108,5 +108,4 @@ Every workload, in every language and runtime, answers `1000` with `332833500` (
 
 ## Notes
 
-- `sync.sh` mirrors the repository to a Windows folder for backup; never run benchmarks from the mirror.
 - AI assistance used in this project is declared in the accompanying report.

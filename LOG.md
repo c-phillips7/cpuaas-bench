@@ -1,3 +1,4 @@
+Non textnsive List of workings, just notes made along the way outside of git commits
 
 # Docker workings
 - Installed native Linux docker in Ubuntu instead of desktop windows version used previously.

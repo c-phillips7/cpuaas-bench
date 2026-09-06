@@ -4,3 +4,4 @@ fc/firecracker
 fc/vmlinux
 fc/rootfs.ext4
 __pycache__/
+sync.sh
