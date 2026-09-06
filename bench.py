@@ -107,12 +107,12 @@ def cmd_m3(args):
     out = f"/results/docker/docker_m3_{mech}{cond}{suffix}.csv"
     tc = f'tc qdisc add dev eth0 root netem delay {args.netem} && ' if args.netem else ""
     cap = "--cap-add NET_ADMIN " if args.netem else ""
-    condition = f"netem{args.netem}" if args.netem else "baseline"                    # NEW
-    bench_args = f"--warmup {args.warmup} --iters {args.iters} --condition {condition}"  # NEW
+    condition = f"netem{args.netem}" if args.netem else "baseline"
+    bench_args = f"--warmup {args.warmup} --iters {args.iters} --condition {condition}"
     if mech == "shm":
         ping = (f'docker run --rm --name m3-ping --ipc=shareable --cpuset-cpus=4 {cap}'
                 f'-v "$PWD/results:/results" bench-py sh -c "{tc}python -u model3_shm.py '
-                f'ping --core 4 --out {out} {bench_args}"')                           # CHANGED
+                f'ping --core 4 --out {out} {bench_args}"') 
         pong = ('docker run --rm --name m3-pong --ipc=container:m3-ping --cpuset-cpus=6 '
                 'bench-py python -u model3_shm.py pong --core 6')
         order = [("terminal 1 (FIRST - creates segment)", ping), ("terminal 2", pong)]
@@ -121,7 +121,7 @@ def cmd_m3(args):
                 'bench-py python -u model3_tcp.py pong --host 0.0.0.0 --core 6')
         ping = (f'docker run --rm --name m3-ping --network benchnet --cpuset-cpus=4 {cap}'
                 f'-v "$PWD/results:/results" bench-py sh -c "{tc}python -u model3_tcp.py '
-                f'ping --host m3-pong --core 4 --out {out} {bench_args}"')            # CHANGED
+                f'ping --host m3-pong --core 4 --out {out} {bench_args}"')
         order = [("terminal 1 (FIRST - server listens)", pong), ("terminal 2", ping)]
     print(f"# M3 {mech}{' + netem ' + args.netem if args.netem else ''} -> {out}")
     for label, c in order:

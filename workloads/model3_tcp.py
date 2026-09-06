@@ -31,12 +31,9 @@ import json
 # 3) WAN emulation sweep: ping container applies egress delay to its own eth0
 #    (RTT ~= baseline + delay). One run per delay; change BOTH delay and --out:
 #   docker run --rm --name m3-ping --network benchnet --cpuset-cpus=4 --cap-add NET_ADMIN -v "$PWD/results:/results" bench-py sh -c "tc qdisc add dev eth0 root netem delay 10ms && python -u model3_tcp.py ping --host m3-pong --core 4 --out /results/docker/docker_m3_tcp_netem10ms.csv"
-#    50ms run: cut WARMUP to 200 / ITERS to 2000 first (else ~45min), make
-#    build, run, restore constants, make build again; note the reduced n.
-#
-# Fidelity record (configured -> achieved p50): baseline ~33-46us;
-# 1ms -> 1.166ms (reproduced twice, <1% apart); 10ms -> 10.34ms
-# (netem overhead ~0.1-0.3ms, document it).
+# 50ms run: use --warmup 200 --iters 2000 (a full 50k run takes ~45 min)
+#   - the reduced n is recorded in the sidecar.
+# Fidelity is measured, not assumed: see the netem table in the report.
 # Expected: ~2 orders of magnitude above the SHM path before any netem delay.
 # Refuses to overwrite an existing --out file (guard in __main__).
 # =============================================================================
@@ -87,7 +84,7 @@ def ping(host, out, warmup, iters, condition):
     # add meta data of number of warmups and iterations used for each run
     meta = {
         "warmup": warmup, "iters": iters,
-        "condition": a.condition,   # or pass it into ping alongside out
+        "condition": a.condition,
         "argv": sys.argv,
         "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "condition": condition

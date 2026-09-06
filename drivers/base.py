@@ -19,7 +19,8 @@ class Instance:
     """
     id: str
     runtime: str
-    # For wasmtime, Wasmtime instance is live Python object, so we can store it here for later use. For other runtimes, this is None.
+    # meta holds whatever the driver needs to reach the sandbox later
+        # for all three drivers this is the child process handle.
     meta : dict = field(default_factory=dict)
 
 class RuntimeDriver(ABC):
@@ -49,8 +50,8 @@ class RuntimeDriver(ABC):
         
         Docker: build the image
         Wasmtime: compile the wasm module
-        Firecracker: assemble kernel + root filesystem
-
+        Firecracker: verify the kernel and root filesystem exist and write the VM config
+        
         Excluded from all timings by design to exclude compilation time from the measured cold start time
         """
         
@@ -83,7 +84,7 @@ class RuntimeDriver(ABC):
         bytes-vs-MB confusion cannot be typed silently.
         
         Docker: peak memory from the container's cgroup file (memory.peak)
-        Other drivers: TBD
+        Wasmtime and Firecracker: VmHWM of the process from /proc (peak resident memory)
         """
 
     @abstractmethod

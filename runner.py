@@ -57,7 +57,7 @@ def bench_model2(driver, sessions=5, execs=30, workload="model2") :
                 "runtime": driver.name,
                 "workload": workload,
                 "model": 2,
-                "cold_start_ms": cold_ms, # Maybe if i == 0 else None 
+                "cold_start_ms": cold_ms, 
                 "warm_exec_ms": (t3 - t2) / 1e6,
             })
         metrics = driver.collect(inst)
